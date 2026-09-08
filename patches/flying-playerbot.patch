@@ -1,0 +1,94 @@
+diff --git a/src/mod_flying_mounts_everywhere.cpp b/src/mod_flying_mounts_everywhere.cpp
+index 5453bdc..1219d17 100644
+--- a/src/mod_flying_mounts_everywhere.cpp
++++ b/src/mod_flying_mounts_everywhere.cpp
+@@ -4,6 +4,7 @@
+ #include "Config.h"
+ #include "Map.h"
+ #include "Log.h"
++#include "SpellAuraEffects.h"
+ #include <vector>
+ #include <string>
+ #include <sstream>
+@@ -23,7 +24,7 @@ namespace FlyMountsEverywhere
+         if (!sEnabled || !player || !player->IsInWorld())
+             return false;
+ 
+-        if (player->getLevel() < sMinLevel)
++        if (player->GetLevel() < sMinLevel)
+             return false;
+ 
+         Map* map = player->GetMap();
+@@ -38,25 +39,31 @@ namespace FlyMountsEverywhere
+ 
+         return true;
+     }
+-
+     static bool IsAllowedMount(Player* player)
+     {
+         if (!player->IsMounted())
+             return false;
+ 
+-        uint32 mountSpellId = player->GetMountSpellId();
+-        if (!mountSpellId)
++        auto const& flightAuras =
++            player->GetAuraEffectsByType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED);
++
++        if (flightAuras.empty())
+             return false;
+ 
+         if (sAllowedMounts.empty())
+-            return player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED);
++            return true;
+ 
+-        if (std::find(sAllowedMounts.begin(), sAllowedMounts.end(), mountSpellId) != sAllowedMounts.end())
+-            return player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED);
++        for (AuraEffect const* effect : flightAuras)
++        {
++            if (effect &&
++                std::find(sAllowedMounts.begin(), sAllowedMounts.end(), effect->GetId()) != sAllowedMounts.end())
++                return true;
++        }
+ 
+         return false;
+     }
+ 
++
+     static void UpdateFlight(Player* player)
+     {
+         if (!player)
+@@ -68,8 +75,7 @@ namespace FlyMountsEverywhere
+             {
+                 player->SetCanFly(true);
+                 if (sDebug)
+-                    LOG_INFO("module", "[FlyingMountsEverywhere] Flight ENABLED for {} (spell {})",
+-                             player->GetName(), player->GetMountSpellId());
++                    LOG_INFO("module", "[FlyingMountsEverywhere] Flight ENABLED for {}", player->GetName());
+             }
+             return;
+         }
+@@ -122,12 +128,10 @@ namespace FlyMountsEverywhere
+     public:
+         PlayerScript_FlyingMountsEverywhere() : PlayerScript("PlayerScript_FlyingMountsEverywhere") { }
+ 
+-        void OnLogin(Player* player) override { UpdateFlight(player); }
+-        void OnMapChanged(Player* player) override { UpdateFlight(player); }
+-        void OnUpdateZone(Player* player, uint32, uint32) override { UpdateFlight(player); }
+-        void OnMount(Player* player, uint32) override { UpdateFlight(player); }
+-        void OnDismount(Player* player) override { UpdateFlight(player); }
+-        void OnUpdate(Player* player, uint32) override { UpdateFlight(player); }
++        void OnPlayerLogin(Player* player) override { UpdateFlight(player); }
++        void OnPlayerMapChanged(Player* player) override { UpdateFlight(player); }
++        void OnPlayerUpdateZone(Player* player, uint32, uint32) override { UpdateFlight(player); }
++        void OnPlayerUpdate(Player* player, uint32) override { UpdateFlight(player); }
+     };
+ }
+ 
+@@ -136,3 +140,7 @@ void Addmod_flying_mounts_everywhereScripts()
+     new FlyMountsEverywhere::WorldScript_FlyingMountsEverywhere();
+     new FlyMountsEverywhere::PlayerScript_FlyingMountsEverywhere();
+ }
++
++
++
++

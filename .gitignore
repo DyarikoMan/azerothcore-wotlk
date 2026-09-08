@@ -137,3 +137,19 @@ e2e/go.work.sum
 
 .cache
 compile_commands.json
+/ChromieCraft_3.3.5a/
+/backups/
+
+# Our reproducible AzerothCore setup
+!/docker-compose.override.yml
+!/env/dist/etc/
+!/env/dist/etc/modules/
+!/env/dist/etc/modules/*.conf
+!/patches/
+!/patches/*.patch
+
+# Inside env/dist/etc, keep ONLY module .conf files
+/env/dist/etc/*
+!/env/dist/etc/modules/
+/env/dist/etc/modules/*
+!/env/dist/etc/modules/*.conf

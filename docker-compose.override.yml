@@ -1,0 +1,8 @@
+services:
+  ac-worldserver:
+    environment:
+      AC_AI_PLAYERBOT_RANDOM_BOT_AUTOLOGIN: "1"
+      AC_AI_PLAYERBOT_MIN_RANDOM_BOTS: "150"
+      AC_AI_PLAYERBOT_MAX_RANDOM_BOTS: "200"
+    volumes:
+      - ./modules:/azerothcore/modules:ro
